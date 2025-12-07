@@ -25,7 +25,7 @@ export function TutorPanel({ analysis, loading }: TutorPanelProps) {
     return (
       <Card className="h-full flex items-center justify-center">
         <p className="text-muted-foreground">
-          Enter a query and click "Analyze Query" to get started
+          Enter a query and click &quot;Analyze Query&quot; to get started
         </p>
       </Card>
     );
