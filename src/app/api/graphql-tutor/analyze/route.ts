@@ -28,13 +28,6 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({ query, detailed: true }),
       });
 
-      // Call GraphQ-LLM optimization service
-      const optimizeResponse = await fetch(`${graphqLlmUrl}/api/optimizations/optimize`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, includeSimilarQueries: true }),
-      });
-
       // Call GraphQ-LLM efficiency service
       const efficiencyResponse = await fetch(`${graphqLlmUrl}/api/efficiency/estimate`, {
         method: "POST",
@@ -44,7 +37,6 @@ export async function POST(req: NextRequest) {
 
       // Parse responses
       const explanationData = explainResponse.ok ? await explainResponse.json() : null;
-      const optimizationData = optimizeResponse.ok ? await optimizeResponse.json() : null;
       const efficiencyData = efficiencyResponse.ok ? await efficiencyResponse.json() : null;
 
       // Format explanation response for UI
@@ -59,15 +51,6 @@ export async function POST(req: NextRequest) {
             complexity: "unknown",
             recommendations: [],
           };
-
-      // Format optimizations response for UI
-      const optimizations = optimizationData?.suggestions
-        ? optimizationData.suggestions.map((s: any) => ({
-            query: s.optimizedQuery || query,
-            explanation: s.reason || s.suggestion || "Optimization suggestion",
-            confidence: 0.8,
-          }))
-        : [];
 
       // Format efficiency response for UI
       const efficiency = efficiencyData
@@ -93,7 +76,6 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({
         explanation,
-        optimizations,
         efficiency,
       });
     } catch (fetchError) {
@@ -109,13 +91,6 @@ export async function POST(req: NextRequest) {
             "Use specific field selections to reduce payload size",
           ],
         },
-        optimizations: [
-          {
-            query: query,
-            explanation: "Query is already well-optimized for single transaction retrieval.",
-            confidence: 0.85,
-          },
-        ],
         efficiency: {
           score: 92,
           estimatedTime: "< 10ms",

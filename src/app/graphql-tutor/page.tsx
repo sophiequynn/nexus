@@ -62,7 +62,7 @@ export default function GraphQLTutorPage() {
       <div className="mb-4">
         <h1 className="text-3xl font-bold">GraphQL Query Tutor</h1>
         <p className="text-muted-foreground">
-          Get AI-powered explanations, optimizations, and efficiency analysis for your GraphQL queries
+          Get AI-powered explanations and efficiency analysis for your GraphQL queries
         </p>
       </div>
 
