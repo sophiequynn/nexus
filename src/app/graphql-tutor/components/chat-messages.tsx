@@ -3,7 +3,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ExplanationPanel } from "./explanation-panel";
-import { OptimizationPanel } from "./optimization-panel";
 import { EfficiencyDisplay } from "./efficiency-display";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Bot } from "lucide-react";
@@ -94,19 +93,13 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
                   </div>
 
                   <Tabs defaultValue="explanation" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="explanation">Explanation</TabsTrigger>
-                      <TabsTrigger value="optimization">Optimization</TabsTrigger>
                       <TabsTrigger value="efficiency">Efficiency</TabsTrigger>
                     </TabsList>
                     <TabsContent value="explanation" className="mt-4">
                       <ExplanationPanel
                         explanation={message.analysis.explanation}
-                      />
-                    </TabsContent>
-                    <TabsContent value="optimization" className="mt-4">
-                      <OptimizationPanel
-                        optimizations={message.analysis.optimizations}
                       />
                     </TabsContent>
                     <TabsContent value="efficiency" className="mt-4">

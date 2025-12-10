@@ -3,7 +3,6 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExplanationPanel } from "./explanation-panel";
-import { OptimizationPanel } from "./optimization-panel";
 import { EfficiencyDisplay } from "./efficiency-display";
 import { Loader2 } from "lucide-react";
 
@@ -36,21 +35,17 @@ export function TutorPanel({ analysis, loading }: TutorPanelProps) {
       <CardHeader>
         <CardTitle>AI Tutor</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Get explanations, optimizations, and efficiency analysis
+          Get explanations and efficiency analysis
         </p>
       </CardHeader>
       <CardContent className="flex-1 overflow-auto">
         <Tabs defaultValue="explanation" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="explanation">Explanation</TabsTrigger>
-            <TabsTrigger value="optimization">Optimization</TabsTrigger>
             <TabsTrigger value="efficiency">Efficiency</TabsTrigger>
           </TabsList>
           <TabsContent value="explanation" className="mt-4">
             <ExplanationPanel explanation={analysis.explanation} />
-          </TabsContent>
-          <TabsContent value="optimization" className="mt-4">
-            <OptimizationPanel optimizations={analysis.optimizations} />
           </TabsContent>
           <TabsContent value="efficiency" className="mt-4">
             <EfficiencyDisplay efficiency={analysis.efficiency} />

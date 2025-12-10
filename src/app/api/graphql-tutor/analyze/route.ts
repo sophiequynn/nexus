@@ -28,13 +28,6 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({ query, detailed: true }),
       });
 
-      // Call GraphQ-LLM optimization service
-      const optimizeResponse = await fetch(`${graphqLlmUrl}/api/optimizations/optimize`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, includeSimilarQueries: true }),
-      });
-
       // Call GraphQ-LLM efficiency service
       const efficiencyResponse = await fetch(`${graphqLlmUrl}/api/efficiency/estimate`, {
         method: "POST",
@@ -44,7 +37,6 @@ export async function POST(req: NextRequest) {
 
       // Parse responses
       const explanationData = explainResponse.ok ? await explainResponse.json() : null;
-      const optimizationData = optimizeResponse.ok ? await optimizeResponse.json() : null;
       const efficiencyData = efficiencyResponse.ok ? await efficiencyResponse.json() : null;
 
       // Format explanation response for UI
@@ -60,16 +52,15 @@ export async function POST(req: NextRequest) {
             recommendations: [],
           };
 
-      // Format optimizations response for UI
-      const optimizations = optimizationData?.suggestions
-        ? optimizationData.suggestions.map((s: any) => ({
-            query: s.optimizedQuery || query,
-            explanation: s.reason || s.suggestion || "Optimization suggestion",
-            confidence: 0.8,
-          }))
-        : [];
-
       // Format efficiency response for UI
+      // Extract complexity from efficiencyData or fallback to explanationData
+      const complexity = efficiencyData?.complexity || 
+                        explanationData?.complexity || 
+                        (efficiencyData?.queryAnalysis ? 
+                          (efficiencyData.queryAnalysis.fieldCount > 20 ? "high" : 
+                           efficiencyData.queryAnalysis.fieldCount > 10 ? "medium" : "low") : 
+                          "medium");
+
       const efficiency = efficiencyData
         ? {
             score: efficiencyData.efficiencyScore || 0,
@@ -80,7 +71,7 @@ export async function POST(req: NextRequest) {
               ? `CPU: ${efficiencyData.estimatedResourceUsage.cpu || "N/A"}%, Memory: ${efficiencyData.estimatedResourceUsage.memory || "N/A"}MB`
               : "Unknown",
             recommendations: efficiencyData.recommendations || [],
-            complexity: efficiencyData.complexity,
+            complexity: complexity, // Use extracted complexity
             similarQueries: efficiencyData.similarQueries,
           }
         : {
@@ -88,12 +79,49 @@ export async function POST(req: NextRequest) {
             estimatedTime: "Unknown",
             resourceUsage: "Unknown",
             recommendations: [],
-            complexity: "unknown",
+            complexity: complexity, // Use extracted complexity even in fallback
           };
+
+      // Send query statistics to ResLens Middleware
+      const middlewareUrl = process.env.RESLENS_MIDDLEWARE_URL || "http://localhost:3003";
+      const storeUrl = `${middlewareUrl}/api/v1/queryStats/store`;
+      
+      try {
+        console.log(`[Nexus] Sending query stats to middleware: ${storeUrl}`);
+        console.log(`[Nexus] Efficiency complexity: ${efficiency.complexity}`);
+        const middlewareResponse = await fetch(storeUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query,
+            efficiency: {
+              ...efficiency,
+              complexity: efficiency.complexity || "medium", // Ensure complexity is always set
+            },
+            explanation,
+            optimizations: [], // No optimizations in current main branch
+            timestamp: new Date().toISOString(),
+          }),
+        });
+
+        if (!middlewareResponse.ok) {
+          const errorText = await middlewareResponse.text().catch(() => 'Unknown error');
+          console.error(`[Nexus] Middleware returned ${middlewareResponse.status}: ${errorText}`);
+        } else {
+          const result = await middlewareResponse.json().catch(() => ({}));
+          console.log(`[Nexus] Query stats stored successfully:`, result);
+        }
+      } catch (middlewareError) {
+        // Log but don't fail if middleware is unavailable
+        console.error("[Nexus] Failed to store query statistics in middleware:", middlewareError);
+        if (middlewareError instanceof Error) {
+          console.error("[Nexus] Error details:", middlewareError.message);
+          console.error("[Nexus] Stack:", middlewareError.stack);
+        }
+      }
 
       return NextResponse.json({
         explanation,
-        optimizations,
         efficiency,
       });
     } catch (fetchError) {
@@ -109,13 +137,6 @@ export async function POST(req: NextRequest) {
             "Use specific field selections to reduce payload size",
           ],
         },
-        optimizations: [
-          {
-            query: query,
-            explanation: "Query is already well-optimized for single transaction retrieval.",
-            confidence: 0.85,
-          },
-        ],
         efficiency: {
           score: 92,
           estimatedTime: "< 10ms",
