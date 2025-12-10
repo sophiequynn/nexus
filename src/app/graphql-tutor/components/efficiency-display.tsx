@@ -3,6 +3,8 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ExternalLink } from "lucide-react";
 
 interface EfficiencyDisplayProps {
   efficiency: any;
@@ -71,6 +73,20 @@ export function EfficiencyDisplay({ efficiency }: EfficiencyDisplayProps) {
           </ul>
         </div>
       )}
+
+      <div className="pt-4 border-t">
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => {
+            const reslensUrl = process.env.NEXT_PUBLIC_RESLENS_URL || "http://localhost:5173";
+            window.open(`${reslensUrl}/query-stats`, "_blank");
+          }}
+        >
+          <ExternalLink className="mr-2 h-4 w-4" />
+          View Query Stats in ResLens
+        </Button>
+      </div>
     </div>
   );
 }
